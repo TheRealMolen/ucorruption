@@ -1,0 +1,91 @@
+4400:  013c           jmp	#0x4404
+4404:  3140 0044      mov   #0x4400, sp
+4408:  013c           jmp	#0x440c
+440c:  1542 5c01      mov   &0x015c, r5
+4410:  013c           jmp	#0x4414
+4414:  75f3           and.b #-0x1, r5
+4416:  013c           jmp	#0x441a
+441a:  35d0 085a      bis   #0x5a08, r5
+441e:  013c           jmp	#0x4422
+4422:  3f40 0011      mov   #0x1100, r15
+4426:  013c           jmp	#0x442a
+442a:  0f93           tst   r15
+442c:  0724           jeq	#0x443c
+442e:  013c           jmp	#0x4432
+4432:  8245 5c01      mov   r5, &0x015c
+4436:  013c           jmp	#0x443a
+443a:  2f83           decd  r15
+443c:  0343           clr   r3
+443e:  013c           jmp	#0x4442
+4442:  1e4f 3446      mov   0x4634(r15), r14
+4446:  013c           jmp	#0x444a
+444a:  8f4e 0024      mov   r14, 0x2400(r15)
+444e:  013c           jmp	#0x4452
+4452:  ef23           jnz	#0x4432
+4454:  013c           jmp	#0x4458
+4458:  0f43           clr   r15
+445a:  0f93           tst   r15
+445c:  013c           jmp	#0x4460
+4460:  0e24           jeq	#0x447e
+4462:  013c           jmp	#0x4466
+4466:  8245 5c01      mov   r5, &0x015c
+446a:  013c           jmp	#0x446e
+446e:  1f83           dec   r15
+4470:  013c           jmp	#0x4474
+4474:  cf43 0035      clr.b 0x3500(r15)
+4478:  013c           jmp	#0x447c
+447c:  f923           jnz	#0x4470
+447e:  013c           jmp	#0x4482
+4482:  3e40 0012      mov   #0x1200, r14
+4486:  013c           jmp	#0x448a
+448a:  3f40 0024      mov   #0x2400, r15
+448e:  013c           jmp	#0x4492
+4492:  bf4f feef      mov   @r15+, -0x1002(r15)
+4496:  013c           jmp	#0x449a
+449a:  3e53           add   #-0x1, r14
+449c:  fa23           jnz	#0x4492
+449e:  013c           jmp	#0x44a2
+44a2:  3b40 0c16      mov   #0x160c, r11
+44a6:  013c           jmp	#0x44aa
+44aa:  0212           push  sr
+44ac:  013c           jmp	#0x44b0
+44b0:  3040 be44      br    #0x44be
+44be:  3240 00a0      mov   #0xa000, sr
+44c2:  b012 1000      call  #0x10
+44c6:  0c4f           mov   r15, r12
+44c8:  3cf0 fe0f      and   #0xffe, r12
+44cc:  3c50 00e0      add   #0xe000, r12
+44d0:  0a4b           mov   r11, r10
+44d2:  3f4a           mov   @r10+, r15
+44d4:  0012           push  pc
+44d6:  733c           jmp	#0x45be
+45be:  013c           jmp	#0x45c2
+45c2:  0e4a           mov   r10, r14
+45c4:  8e10           swpb  r14
+45c6:  013c           jmp	#0x45ca
+45ca:  3e80 d204      sub   #0x4d2, r14
+45ce:  013c           jmp	#0x45d2
+45d2:  0e52           add   sr, r14
+45d4:  0e10           rrc   r14
+45d6:  013c           jmp	#0x45da
+45da:  0eaa           dadd  r10, r14
+45dc:  013c           jmp	#0x45e0
+45e0:  0e11           rra   r14
+45e2:  013c           jmp	#0x45e6
+45e6:  0e10           rrc   r14
+45e8:  2ea0           dadd  @pc, r14
+45ea:  013c           jmp	#0x45ee
+45ee:  0e52           add   sr, r14
+45f0:  0e10           rrc   r14
+45f2:  013c           jmp	#0x45f6
+45f6:  2e50           add   @pc, r14
+45f8:  0e10           rrc   r14
+45fa:  013c           jmp	#0x45fe
+45fe:  0e10           rrc   r14
+4600:  013c           jmp	#0x4604
+4604:  0fee           xor   r14, r15
+4606:  013c           jmp	#0x460a
+460a:  3e41           pop   r14
+460c:  2e53           incd  r14
+460e:  013c           jmp	#0x4612
+4612:  004e           br    r14

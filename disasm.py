@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 #
+# disassembler for MSP430
+#
 # based on https://gist.github.com/majek/8708232
 #
 
@@ -28,7 +30,7 @@ def load_memory(filename):
                     a = line.split()
                     regs.update( zip(a[:-1:2], a[1::2]) )
                     continue
-                addr, mem, _ = line.split("  ", 2)
+                addr, mem = line.split("  ")[0:2]
                 addr, _ = addr.strip().split(':', 1)
                 mem = (''.join(mem.strip().split())).decode('hex')
                 assert len(mem) % 2 == 0
@@ -65,9 +67,9 @@ def main(initaddr):
 
 bswap = lambda v: (v >> 8) | ((v & 0xFF) << 8)
 
-REGS=list('pc sp sr cq r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15'.split())
+REGS=list('pc sp sr r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15'.split())
 
-def decode(fetch_mem, addr=0x0000, with_addr=False, with_opcodes=True):
+def decode(fetch_mem, addr=0x0000, with_addr=False, with_opcodes=True, write_instr=None):
     fetched, naddr, final, called = (), None, False, None
     a = fetch_mem(addr)
 
@@ -86,6 +88,14 @@ def decode(fetch_mem, addr=0x0000, with_addr=False, with_opcodes=True):
         asrc   = (a & 0x0030) >> 4
         dreg   = (a & 0x000f) >> 0
         r, fetched, final = decode_double(opcode, bw, asrc, sreg, adst, dreg, fetch_mem, addr)
+
+        # br is really a jmp but doesn't look like one o_O
+        if r[0].strip() == 'br':
+            if r[1].startswith('#0x'):
+                naddr = int(r[1][3:], 16)
+            else:
+                pass #print 'WARNING: indirect jump @ %04x can\'t be followed' % addr
+
     elif form == 1:
         opcode = (a & 0xFF80) >> 7
         bw     = (a & 0x0040) >> 6
@@ -107,7 +117,11 @@ def decode(fetch_mem, addr=0x0000, with_addr=False, with_opcodes=True):
                 ('%04x' % bswap(fetched[0])) if len(fetched) > 0 else '    ',
                 ('%04x' % bswap(fetched[1])) if len(fetched) > 1 else '    ',
                 ))
-    print ''.join(itertools.chain(g, r))
+    instr = ''.join(itertools.chain(g, r))
+    if write_instr is not None:
+        write_instr( addr, instr )
+    else:
+        print instr
 
     jumps = set()
     if not final:
@@ -128,7 +142,8 @@ class Instruction(object):
         self.dst = dst
 
     def compile(self):
-        return [self.opcode, self.bw, self.tab, self.src, self.comma, self.dst]
+        opcode = self.opcode + self.bw
+        return [opcode.ljust(6), self.src, self.comma, self.dst]
 
 SOPCODES={
     0x20: 'rrc',
@@ -152,7 +167,7 @@ def decode_single(opcode, bw, adst, dreg, fetch_mem, addr):
         r.dst = '@' + REGS[dreg]
     elif adst == 3 and dreg == 0: # immediate
         addr += 2; b = fetch_mem(addr); fetched.append( b )
-        r.dst = "#0x%x" % (b,)
+        r.dst = "#0x%04x" % (b,)
         called = b
 
     return r.compile(), fetched, called, final
@@ -198,6 +213,7 @@ def decode_double(opcode, bw, asrc, sreg, adst, dreg, fetch_mem, addr):
         r.src = r.comma = ''
     elif r.opcode == 'sub' and sreg == 3 and asrc == 1:
         r.opcode = 'dec'
+        r.src = r.comma = ''
     elif r.opcode == 'sub' and sreg == 3 and asrc == 2:
         r.opcode = 'decd'
         r.src = r.comma = ''
@@ -219,7 +235,7 @@ def decode_double(opcode, bw, asrc, sreg, adst, dreg, fetch_mem, addr):
         r.src = '@%s' % (REGS[sreg],)
     elif asrc == 3 and sreg == 0: # immediate
         addr += 2; b = fetch_mem(addr); fetched.append( b )
-        r.src = "#0x%x" % (b,)
+        r.src = "#0x%04x" % (b,)
     elif asrc == 3 and sreg == 1:
         r.opcode = 'pop'
         r.src = r.comma = ''
@@ -237,7 +253,7 @@ def decode_double(opcode, bw, asrc, sreg, adst, dreg, fetch_mem, addr):
         if b & 0x8000:
             s = '-'
             b = 0xFFFF - b + 1
-        r.dst = "%s0x%x(%s)" % (s, b, REGS[dreg],)
+        r.dst = "%s0x%04x(%s)" % (s, b, REGS[dreg],)
 
     if asrc == 3 and sreg == 1 and adst == 0 and dreg == 0:
         r.opcode = 'ret'
@@ -264,8 +280,10 @@ def decode_jump(opcode, c, off, addr):
     else:
         n = addr + delta +2
     final = (c == 7)
-    return ('%s\t$%s0x%x\t\t; ->%04x' % (
-            JMPOPCODES[c], s, delta, n), n, final)
+    #return ('%s\t#0x%04x\t\t; $%s0x%x' % (
+    #        JMPOPCODES[c], n, s, delta), n, final)
+    return ('%s\t#0x%04x' % (
+             JMPOPCODES[c], n), n, final)
 
 def X(hexstring):
     s = ''.join(hexstring.split()).decode('hex')
